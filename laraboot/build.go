@@ -46,13 +46,21 @@ func Build(logger LogEmitter, clock chronos.Clock) packit.BuildFunc {
 		ghBin := fmt.Sprintf("%s/gh_%s_linux_arm64/bin", binPath, dependency.Version)
 		thisLayer.SharedEnv.Default("GH_BIN", ghBin)
 		logger.Environment(thisLayer.SharedEnv)
-
+		// expanding path and setting GH_BIN for runtime use
+		envErr := os.Setenv("PATH", fmt.Sprintf("%s:%s", os.Getenv("PATH"), ghBin))
+		if envErr != nil {
+			return packit.BuildResult{}, ghGenErr
+		}
+		envErr = os.Setenv("GH_BIN", ghBin)
+		if envErr != nil {
+			return packit.BuildResult{}, ghGenErr
+		}
 		logger.Action("Completed in %s", duration.Round(time.Millisecond))
 		logger.Break()
 
 		logger.Process("Checking installation")
 
-		p := script.Exec(fmt.Sprintf("%s/gh", ghBin))
+		p := script.Exec(fmt.Sprintf("%s", "gh"))
 		output, _ := p.String()
 		fmt.Println(output)
 
@@ -60,16 +68,6 @@ func Build(logger LogEmitter, clock chronos.Clock) packit.BuildFunc {
 		if exit != 0 {
 			err1 := errors.New("Instalation check failed: command exited with a non-zero status")
 			return packit.BuildResult{}, err1
-		}
-
-		// expanding path and setting GH_BIN for runtime use
-		envErr := os.Setenv("PATH", fmt.Sprintf("%s:%s", os.Getenv("PATH"), binPath))
-		if envErr != nil {
-			return packit.BuildResult{}, ghGenErr
-		}
-		envErr = os.Setenv("GH_BIN", ghBin)
-		if envErr != nil {
-			return packit.BuildResult{}, ghGenErr
 		}
 
 		return packit.BuildResult{
