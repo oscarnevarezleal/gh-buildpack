@@ -2,7 +2,9 @@ package laraboot
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
+	"github.com/bitfield/script"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/cargo"
 	"github.com/paketo-buildpacks/packit/chronos"
@@ -29,30 +31,45 @@ func Build(logger LogEmitter, clock chronos.Clock) packit.BuildFunc {
 		binPath := fmt.Sprintf("%s/bin", thisLayer.Path)
 		logger.Subprocess("Installing Gh %s %s into %s", dependency.Version, dependency.SHA256, binPath)
 
-		duration, blueprintGenErr := clock.Measure(func() error {
+		duration, ghGenErr := clock.Measure(func() error {
 			return dependencyService.Deliver(dependency, context.CNBPath, binPath, "/platform")
 		})
 
-		if blueprintGenErr != nil {
-			return packit.BuildResult{}, blueprintGenErr
+		if ghGenErr != nil {
+			return packit.BuildResult{}, ghGenErr
 		}
 		logger.Action("Completed in %s", duration.Round(time.Millisecond))
 		logger.Break()
 
-		logger.Process("Configuring environment")
+		logger.Process("Set up environment")
 		thisLayer.SharedEnv.Append("PATH", binPath, ":")
-		blueprintBin := fmt.Sprintf("%s/gh", binPath)
-		thisLayer.SharedEnv.Default("GH_BIN", blueprintBin)
+		ghBin := fmt.Sprintf("%s/gh_%s_linux_arm64/bin", binPath, dependency.Version)
+		thisLayer.SharedEnv.Default("GH_BIN", ghBin)
 		logger.Environment(thisLayer.SharedEnv)
+
+		logger.Action("Completed in %s", duration.Round(time.Millisecond))
+		logger.Break()
+
+		logger.Process("Checking installation")
+
+		p := script.Exec(fmt.Sprintf("%s/gh", ghBin))
+		output, _ := p.String()
+		fmt.Println(output)
+
+		var exit int = p.ExitStatus()
+		if exit != 0 {
+			err1 := errors.New("Instalation check failed: command exited with a non-zero status")
+			return packit.BuildResult{}, err1
+		}
 
 		// expanding path and setting GH_BIN for runtime use
 		envErr := os.Setenv("PATH", fmt.Sprintf("%s:%s", os.Getenv("PATH"), binPath))
 		if envErr != nil {
-			return packit.BuildResult{}, blueprintGenErr
+			return packit.BuildResult{}, ghGenErr
 		}
-		envErr = os.Setenv("GH_BIN", blueprintBin)
+		envErr = os.Setenv("GH_BIN", ghBin)
 		if envErr != nil {
-			return packit.BuildResult{}, blueprintGenErr
+			return packit.BuildResult{}, ghGenErr
 		}
 
 		return packit.BuildResult{

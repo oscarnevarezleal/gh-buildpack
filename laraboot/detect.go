@@ -1,11 +1,7 @@
 package laraboot
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/cloudfoundry/packit"
-	"os"
-	"path/filepath"
 )
 
 func Detect() packit.DetectFunc {
@@ -14,6 +10,12 @@ func Detect() packit.DetectFunc {
 			Plan: packit.BuildPlan{
 				Provides: []packit.BuildPlanProvision{
 					{Name: "gh"},
+				},
+				Requires: []packit.BuildPlanRequirement{
+					{
+						Name:     "gh",
+						Metadata: map[string]string{},
+					},
 				},
 			},
 		}, nil
