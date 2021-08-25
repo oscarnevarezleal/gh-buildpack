@@ -1,0 +1,36 @@
+api = "0.2"
+
+[buildpack]
+id = "oscarnevarezleal/gh-buildpack"
+name = "gh-buildpack"
+version = "0.0.1"
+
+[[stacks]]
+id = "io.paketo.stacks.tiny"
+
+[[stacks]]
+id = "io.paketo.stacks.base"
+
+[[stacks]]
+id = "io.buildpacks.stacks.bionic"
+
+[[stacks]]
+id = "org.cloudfoundry.stacks.cflinuxfs3"
+
+[metadata]
+default_version = "1.14.0"
+include_files = ["bin/build", "bin/detect", "buildpack.toml"]
+pre_package = "./scripts/package.sh"
+
+[metadata.default-versions]
+gh = "1.14.0"
+
+[[metadata.dependencies]]
+id = "gh"
+version = "1.14.0"
+name = "gh"
+stacks = ["io.buildpacks.stacks.bionic", "io.paketo.stacks.tiny", "io.paketo.stacks.base", "org.cloudfoundry.stacks.cflinuxfs3"]
+uri = "https://github.com/cli/cli/releases/download/v1.14.0/gh_1.14.0_linux_arm64.tar.gz"
+sha256 = "20e70447ce7e4b6c32e5b61f14ed42d763f6b58fb7613f94040d4371fb4cbf4f"
+source = "https://github.com/cli/cli/releases/download/v1.14.0/gh_1.14.0_linux_arm64.tar.gz"
+source_sha256 = "20e70447ce7e4b6c32e5b61f14ed42d763f6b58fb7613f94040d4371fb4cbf4f"
