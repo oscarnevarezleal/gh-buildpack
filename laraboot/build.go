@@ -60,7 +60,7 @@ func Build(logger LogEmitter, clock chronos.Clock) packit.BuildFunc {
 
 		logger.Process("Checking installation")
 
-		p := script.Exec(fmt.Sprintf("%s", "gh"))
+		p := script.Exec("gh")
 		output, _ := p.String()
 		fmt.Println(output)
 
