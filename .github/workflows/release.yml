@@ -37,8 +37,6 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Checkout code
         uses: actions/checkout@v2
-      #      - name: Run tests
-      #        run: go test -v -covermode=count
       - name:  Install deps
         uses: buildpacks/github-actions/setup-pack@v4.1.0
       - name: Build
